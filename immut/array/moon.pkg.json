@@ -4,17 +4,19 @@
     "moonbitlang/core/quickcheck",
     {
       "path": "moonbitlang/core/array",
-      "alias": "_core/array"
+      "alias": "core/array"
     }
   ],
   "targets": {
     "panic_test.mbt": [
       "not",
-      "native"
+      "native",
+      "llvm"
     ],
     "panic_wbtest.mbt": [
       "not",
-      "native"
+      "native",
+      "llvm"
     ]
   }
 }

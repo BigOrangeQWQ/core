@@ -18,6 +18,7 @@ pub fn op_set[K : Compare, V](self : T[K, V], key : K, value : V) -> Unit {
 }
 
 ///|
+#deprecated("Use `get` instead. `op_get` will return `V` instead of `Option[V]` in the future.")
 pub fn op_get[K : Compare, V](self : T[K, V], key : K) -> V? {
   self.get(key)
 }
@@ -123,45 +124,31 @@ pub fn clear[K, V](self : T[K, V]) -> Unit {
 ///|
 /// Iterates the map.
 pub fn each[K, V](self : T[K, V], f : (K, V) -> Unit) -> Unit {
-  let s = []
-  let mut p = self.root
-  while not(p.is_empty()) || not(s.is_empty()) {
-    while not(p.is_empty()) {
-      s.push(p)
-      p = p.unwrap().left
-    }
-    if not(s.is_empty()) {
-      p = s.unsafe_pop()
-      f(p.unwrap().key, p.unwrap().value)
-      p = p.unwrap().right
+  fn dfs(root : Node[K, V]?) -> Unit {
+    if root is Some(root) {
+      dfs(root.left)
+      f(root.key, root.value)
+      dfs(root.right)
     }
   }
+
+  dfs(self.root)
 }
 
 ///|
 /// Iterates the map with index.
 pub fn eachi[K, V](self : T[K, V], f : (Int, K, V) -> Unit) -> Unit {
-  let s = []
-  let mut p = self.root
   let mut i = 0
-  while not(p.is_empty()) || not(s.is_empty()) {
-    while not(p.is_empty()) {
-      s.push(p)
-      p = p.unwrap().left
-    }
-    if not(s.is_empty()) {
-      p = s.unsafe_pop()
-      f(i, p.unwrap().key, p.unwrap().value)
-      p = p.unwrap().right
-      i += 1
-    }
-  }
+  self.each(fn(k, v) {
+    f(i, k, v)
+    i = i + 1
+  })
 }
 
 ///|
 /// Returns all keys in the map.
 pub fn keys[K, V](self : T[K, V]) -> Array[K] {
-  let keys = []
+  let keys = Array::new(capacity=self.size)
   self.each(fn(k, _v) { keys.push(k) })
   keys
 }
@@ -169,7 +156,7 @@ pub fn keys[K, V](self : T[K, V]) -> Array[K] {
 ///|
 /// Returns all values in the map.
 pub fn values[K, V](self : T[K, V]) -> Array[V] {
-  let values = []
+  let values = Array::new(capacity=self.size)
   self.each(fn(_k, v) { values.push(v) })
   values
 }
@@ -177,7 +164,7 @@ pub fn values[K, V](self : T[K, V]) -> Array[V] {
 ///|
 /// Converts the map to an array.
 pub fn to_array[K, V](self : T[K, V]) -> Array[(K, V)] {
-  let arr = []
+  let arr = Array::new(capacity=self.size)
   self.each(fn(k, v) { arr.push((k, v)) })
   arr
 }

@@ -309,7 +309,7 @@ pub fn push_back[A](self : T[A], value : A) -> Unit {
 /// dv.unsafe_pop_front()
 /// assert_eq!(dv.front(), Some(2))
 /// ```
-/// @alert unsafe "Panic if the deque is empty."
+#internal(unsafe, "Panic if the deque is empty.")
 pub fn unsafe_pop_front[A](self : T[A]) -> Unit {
   match self.len {
     0 => abort("The deque is empty!")
@@ -364,7 +364,7 @@ pub fn pop_front_exn[A](self : T[A]) -> Unit {
 /// dv.unsafe_pop_back()
 /// assert_eq!(dv.back(), Some(4))
 /// ```
-/// @alert unsafe "Panic if the deque is empty."
+#internal(unsafe, "Panic if the deque is empty.")
 pub fn unsafe_pop_back[A](self : T[A]) -> Unit {
   match self.len {
     0 => abort("The deque is empty!")
@@ -484,7 +484,6 @@ pub fn pop_back[A](self : T[A]) -> A? {
 /// let dv = @deque.of([1, 2, 3, 4, 5])
 /// assert_eq!(dv[2], 3)
 /// ```
-/// @alert unsafe "Panic if the index is out of bounds."
 pub fn op_get[A](self : T[A], index : Int) -> A {
   if index < 0 || index >= self.len {
     let len = self.len
@@ -510,7 +509,6 @@ pub fn op_get[A](self : T[A], index : Int) -> A {
 /// dv[2] = 1
 /// assert_eq!(dv[2], 1)
 /// ```
-/// @alert unsafe "Panic if the index is out of bounds."
 pub fn op_set[A](self : T[A], index : Int, value : A) -> Unit {
   if index < 0 || index >= self.len {
     let len = self.len
@@ -551,7 +549,7 @@ pub fn op_set[A](self : T[A], index : Int, value : A) -> Unit {
 ///   inspect!(v2.length(), content="0")
 /// }
 /// ```
-pub fn T::as_views[A](self : T[A]) -> (ArrayView[A], ArrayView[A]) {
+pub fn T::as_views[A](self : T[A]) -> (@array.View[A], @array.View[A]) {
   guard self.len != 0 else { ([][:], [][:]) }
   let { buf, head, len, .. } = self
   let cap = buf.length()
@@ -861,8 +859,8 @@ pub fn shrink_to_fit[A](self : T[A]) -> Unit {
 /// Shortens the deque in-place, keeping the first `len` elements and dropping
 /// the rest.
 ///
-/// If `len` is greater than or equal to the deque's current length, this has no
-/// effect; if `len` is negative, the function will panic.
+/// If `len` is greater than or equal to the deque's current length or negative, 
+/// this has no effect
 ///
 /// Parameters:
 ///
@@ -879,8 +877,7 @@ pub fn shrink_to_fit[A](self : T[A]) -> Unit {
 /// }
 /// ```
 pub fn truncate[A](self : T[A], len : Int) -> Unit {
-  guard len < self.len else { return }
-  guard len >= 0
+  guard len >= 0 && len < self.len else { return }
   if len == 0 {
     self.clear()
     return

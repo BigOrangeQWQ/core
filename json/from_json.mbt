@@ -118,27 +118,19 @@ pub impl FromJson for Char with from_json(json, path) {
   }
   let len = a.length()
   if len == 1 {
-    a.unsafe_charcode_at(0) |> Char::from_int
+    a.unsafe_charcode_at(0).unsafe_to_char()
   } else if len == 2 {
     let c1 = a.unsafe_charcode_at(0)
     let c2 = a.unsafe_charcode_at(1)
     if c1 >= 0xD800 && c1 <= 0xDBFF && c2 >= 0xDC00 && c2 <= 0xDFFF {
       let c3 = (c1 << 10) + c2 - 0x35fdc00
-      Char::from_int(c3)
+      c3.unsafe_to_char()
     } else {
       decode_error!(path, "Char::from_json: invalid surrogate pair")
     }
   } else {
     decode_error!(path, "Char::from_json: expected single character")
   }
-}
-
-///|
-pub impl FromJson for BigInt with from_json(json, path) {
-  guard json is String(s) else {
-    decode_error!(path, "BigInt::from_json: expected number")
-  }
-  BigInt::from_string(s)
 }
 
 ///|

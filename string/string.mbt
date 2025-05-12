@@ -163,7 +163,7 @@ pub fn iter(self : String) -> Iter[Char] {
         }
       }
       //TODO: handle garbage input
-      guard yield_(Char::from_int(c1)) is IterContinue else { break IterEnd }
+      guard yield_(c1.unsafe_to_char()) is IterContinue else { break IterEnd }
 
     } else {
       IterContinue
@@ -186,7 +186,9 @@ pub fn iter2(self : String) -> Iter2[Int, Char] {
         }
       }
       //TODO: handle garbage input
-      guard yield_(n, Char::from_int(c1)) is IterContinue else { break IterEnd }
+      guard yield_(n, c1.unsafe_to_char()) is IterContinue else {
+        break IterEnd
+      }
 
     } else {
       IterContinue
@@ -234,7 +236,7 @@ pub fn rev_iter(self : String) -> Iter[Char] {
         }
       }
       // TODO: handle garbage input
-      guard yield_(Char::from_int(c1)) is IterContinue else { break IterEnd }
+      guard yield_(c1.unsafe_to_char()) is IterContinue else { break IterEnd }
 
     } else {
       IterContinue
@@ -289,12 +291,6 @@ pub fn last_index_of(
   } else {
     -1
   }
-}
-
-///|
-/// Returns true if this string contains given sub string.
-pub fn contains(self : String, str : String) -> Bool {
-  self.find(str.view()) is Some(_)
 }
 
 ///|
@@ -397,12 +393,14 @@ pub fn String::offset_of_nth_char(
 }
 
 ///|
-/// Returns the Unicode character at the given index.
-pub fn String::char_at(self : String, index : Int) -> Char {
-  guard index >= 0 && index < self.length() else {
-    abort("index out of bounds")
+/// Returns the Unicode character at the given offset.
+/// 
+/// This has O(1) complexity.
+pub fn String::char_at(self : String, offset : Int) -> Char {
+  guard offset >= 0 && offset < self.length() else {
+    abort("offset out of bounds")
   }
-  self.unsafe_char_at(index)
+  self.unsafe_char_at(offset)
 }
 
 ///|

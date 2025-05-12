@@ -13,19 +13,21 @@
 // limitations under the License.
 
 ///|
+#deprecated("Use `@array.View` instead")
+pub typealias ArrayView[A] = @array.View[A]
+
+///|
 pub typealias @builtin.(
   ArgsLoc,
-  Array[X],
-  ArrayView[X],
-  UninitializedArray[X],
-  BigInt,
+  Array,
+  UninitializedArray,
   Failure,
   Hasher,
-  Iter[X],
-  Iter2[X, Y],
+  Iter,
+  Iter2,
   IterResult,
   Json,
-  Map[K, V],
+  Map,
   InspectError,
   SnapshotError,
   SourceLoc,
@@ -33,7 +35,10 @@ pub typealias @builtin.(
 )
 
 ///|
-pub typealias @set.Set[X]
+pub typealias @set.Set
+
+///|
+pub typealias @bigint.BigInt
 
 ///|
 pub traitalias @builtin.(

@@ -51,14 +51,6 @@ test "to_json on empty fixed array" {
 }
 
 ///|
-test "test empty array view to json" {
-  let arr : Array[Int] = []
-  let view : ArrayView[Int] = arr[:]
-  let json = @builtin.ArrayView::to_json(view)
-  inspect!(json, content="Array([])")
-}
-
-///|
 test "test map with string values" {
   let m : Map[String, Int] = {}
   inspect!(m.to_json(), content="Object({})")
@@ -102,12 +94,12 @@ test "test UInt64::to_json" {
 
 ///|
 test "escape control characters" {
-  let str = "abc\x01def" // Control character with code 1
+  let str = "abc\u{01}def" // Control character with code 1
   let json = str.to_json()
   inspect!(
     json,
     content=
-      #|String("abc\x01def")
+      #|String("abc\u{01}def")
     ,
   )
 }
@@ -131,7 +123,7 @@ test "test form feed" {
   inspect!(
     json,
     content=
-      #|String("Form\x0cFeed")
+      #|String("Form\u{0c}Feed")
     ,
   )
 }
@@ -139,7 +131,7 @@ test "test form feed" {
 ///|
 test "to_json BigInt" {
   let n = BigInt::from_int(42)
-  inspect!(@builtin.BigInt::to_json(n), content="String(\"42\")")
+  inspect!(BigInt::to_json(n), content="String(\"42\")")
 }
 
 ///|
@@ -151,14 +143,14 @@ test "Result to_json with Err value" {
 ///|
 test "Bool::to_json true" {
   let result = true.to_json()
-  assert_eq!(result, Json::True)
+  assert_eq!(result, Json::boolean(true))
 }
 
 ///|
 test "to_hex_digit" {
-  let str = "\n\r\b\t\x0C\x00"
+  let str = "\n\r\b\t\u{0C}\u{00}"
   let escaped = str.to_json().as_string().unwrap()
-  inspect!(escaped, content="\n\r\b\t\x0c\x00")
+  assert_eq!(escaped, "\n\r\b\t\u{0c}\u{00}")
 }
 
 ///|
@@ -166,4 +158,11 @@ test "Char::to_json converts char to JSON string" {
   let c = 'A'
   let json = c.to_json()
   inspect!(json, content="String(\"A\")")
+}
+
+///|
+test "Byte::to_json" {
+  inspect!(b'\x00'.to_json(), content="Number(0)")
+  inspect!(b'\xff'.to_json(), content="Number(255)")
+  inspect!(b'\x42'.to_json(), content="Number(66)")
 }

@@ -133,7 +133,7 @@ impl[T : Hash] Hash for Array[T]
 impl[X : Show] Show for Array[X]
 impl[X : ToJson] ToJson for Array[X]
 
-type ArrayView[T] //deprecated
+type ArrayView[T]
 impl ArrayView {
   length[T](Self[T]) -> Int
   op_as_view[T](Self[T], start~ : Int = .., end? : Int) -> Self[T]
@@ -145,49 +145,6 @@ impl ArrayView {
 impl[X : ToJson] ToJson for ArrayView[X]
 
 pub(all) type! BenchError String
-
-type BigInt
-impl BigInt {
-  #deprecated
-  asr(Self, Int) -> Self
-  from_hex(String) -> Self
-  from_int(Int) -> Self
-  from_int64(Int64) -> Self
-  from_octets(Bytes, signum~ : Int = ..) -> Self
-  from_string(String) -> Self
-  from_uint(UInt) -> Self
-  from_uint64(UInt64) -> Self
-  is_zero(Self) -> Bool
-  #deprecated
-  lsl(Self, Int) -> Self
-  pow(Self, Self, modulus? : Self) -> Self
-  #deprecated
-  shl(Self, Int) -> Self
-  #deprecated
-  shr(Self, Int) -> Self
-  to_hex(Self, uppercase~ : Bool = ..) -> String
-  to_int(Self) -> Int
-  to_int64(Self) -> Int64
-  to_octets(Self, length? : Int) -> Bytes
-  to_string(Self) -> String
-  to_uint(Self) -> UInt
-  to_uint64(Self) -> UInt64
-}
-impl Add for BigInt
-impl BitAnd for BigInt
-impl BitOr for BigInt
-impl BitXOr for BigInt
-impl Compare for BigInt
-impl Div for BigInt
-impl Eq for BigInt
-impl Mod for BigInt
-impl Mul for BigInt
-impl Neg for BigInt
-impl Shl for BigInt
-impl Show for BigInt
-impl Shr for BigInt
-impl Sub for BigInt
-impl ToJson for BigInt
 
 pub(all) type! Failure String
 impl Show for Failure
@@ -233,6 +190,7 @@ impl Iter {
   flat_map[T, R](Self[T], (T) -> Self[R]) -> Self[R]
   flatten[T](Self[Self[T]]) -> Self[T]
   fold[T, B](Self[T], init~ : B, (B, T) -> B) -> B
+  group_by[T, K : Eq + Hash](Self[T], (T) -> K) -> Map[K, Array[T]]
   head[A](Self[A]) -> A?
   intersperse[A](Self[A], A) -> Self[A]
   iter[T](Self[T]) -> Self[T]
@@ -243,6 +201,7 @@ impl Iter {
   #deprecated
   map_option[A, B](Self[A], (A) -> B?) -> Self[B]
   map_while[A, B](Self[A], (A) -> B?) -> Self[B]
+  mapi[T, R](Self[T], (Int, T) -> R) -> Self[R]
   maximum[T : Compare](Self[T]) -> T?
   minimum[T : Compare](Self[T]) -> T?
   new[T](((T) -> IterResult) -> IterResult) -> Self[T]
@@ -318,6 +277,7 @@ impl Map {
   keys[K, V](Self[K, V]) -> Iter[K]
   new[K, V](capacity~ : Int = ..) -> Self[K, V]
   of[K : Hash + Eq, V](FixedArray[(K, V)]) -> Self[K, V]
+  #deprecated
   op_get[K : Hash + Eq, V](Self[K, V], K) -> V?
   op_set[K : Hash + Eq, V](Self[K, V], K, V) -> Unit
   remove[K : Hash + Eq, V](Self[K, V], K) -> Unit
@@ -371,6 +331,7 @@ impl Byte {
   lsl(Byte, Int) -> Byte
   #deprecated
   lsr(Byte, Int) -> Byte
+  to_char(Byte) -> Char
   to_double(Byte) -> Double
   to_float(Byte) -> Float
   to_int(Byte) -> Int
@@ -382,6 +343,7 @@ impl Byte {
 }
 
 impl Char {
+  #deprecated
   from_int(Int) -> Char
   to_int(Char) -> Int
   to_uint(Char) -> UInt
@@ -412,6 +374,7 @@ impl Int {
   #deprecated
   shr(Int, Int) -> Int
   to_byte(Int) -> Byte
+  to_char(Int) -> Char?
   to_double(Int) -> Double
   to_float(Int) -> Float
   to_int16(Int) -> Int16
@@ -421,6 +384,7 @@ impl Int {
   to_uint(Int) -> UInt
   to_uint16(Int) -> UInt16
   to_uint64(Int) -> UInt64
+  unsafe_to_char(Int) -> Char
   until(Int, Int, step~ : Int = .., inclusive~ : Bool = ..) -> Iter[Int]
   #deprecated
   upto(Int, Int, inclusive~ : Bool = ..) -> Iter[Int]
@@ -576,7 +540,7 @@ impl String {
   get(String, Int) -> Char
   length(String) -> Int
   make(Int, Char) -> String
-  op_get(String, Int) -> Char
+  op_get(String, Int) -> Int
   substring(String, start~ : Int = .., end? : Int) -> String
   to_string(String) -> String
   unsafe_char_at(String, Int) -> Char
@@ -868,6 +832,7 @@ pub(open) trait ToJson {
 }
 impl ToJson for Unit
 impl ToJson for Bool
+impl ToJson for Byte
 impl ToJson for Char
 impl ToJson for Int
 impl ToJson for Int64

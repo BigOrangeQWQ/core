@@ -62,29 +62,7 @@ pub fn ignore[T](t : T) -> Unit = "%ignore"
 pub fn physical_equal[T](a : T, b : T) -> Bool = "%refeq"
 
 ///|
-/// Aborts the program with an error message. Always causes a panic, regardless
-/// of the message provided.
-///
-/// Parameters:
-///
-/// * `message` : A string containing the error message to be displayed when
-/// aborting.
-///
-/// Returns a value of type `T`. However, this function never actually returns a
-/// value as it always causes a panic.
-///
-/// Example:
-///
-/// ```moonbit
-/// test "panic abort/with_message" {
-///   let x : Int = abort("Something went wrong") // specify return type as Int
-///   ignore(x)
-/// }
-/// ```
-pub fn abort[T](msg : String) -> T {
-  ignore(msg)
-  panic()
-}
+pub fnalias @abort.abort
 
 ///|
 pub fn panic[T]() -> T = "%panic"
@@ -1232,7 +1210,7 @@ pub fn Char::to_uint(self : Char) -> UInt {
 }
 
 ///|
-///
+#deprecated("Use `Int::unsafe_to_char` instead, and use `Int::to_char` for safe conversion")
 pub fn Char::from_int(val : Int) -> Char = "%char_from_int"
 
 ///|
@@ -1363,7 +1341,7 @@ pub fn Bytes::op_get(self : Bytes, idx : Int) -> Byte = "%bytes_get"
 /// }
 /// ```
 ///
-/// @alert unsafe "Panic if index is out of bounds"
+#internal(unsafe, "Panic if index is out of bounds")
 pub fn Bytes::unsafe_get(self : Bytes, idx : Int) -> Byte = "%bytes_get"
 
 ///|
@@ -1472,6 +1450,18 @@ pub fn Bytes::new(len : Int) -> Bytes {
 pub fn Int::to_byte(self : Int) -> Byte = "%i32_to_byte"
 
 ///|
+pub fn Int::unsafe_to_char(self : Int) -> Char = "%char_from_int"
+
+///|
+pub fn Int::to_char(self : Int) -> Char? {
+  if self is (0..=0xD7FF) || self is (0xE000..=0x10FFFF) {
+    Some(self.unsafe_to_char())
+  } else {
+    None
+  }
+}
+
+///|
 /// Converts an unsigned 64-bit integer to a byte by truncating it to fit within
 /// the byte range (0 to 255).
 ///
@@ -1553,7 +1543,7 @@ pub fn FixedArray::op_get[T](self : FixedArray[T], idx : Int) -> T = "%fixedarra
 /// }
 /// ```
 ///
-/// @alert unsafe "Panic if index is out of bounds"
+#internal(unsafe, "Panic if index is out of bounds")
 pub fn FixedArray::unsafe_get[T](self : FixedArray[T], idx : Int) -> T = "%fixedarray.unsafe_get"
 
 ///|
@@ -1613,7 +1603,6 @@ pub fn FixedArray::get[T](self : FixedArray[T], idx : Int) -> T = "%fixedarray.g
 /// }
 /// ```
 ///
-/// @alert unsafe "Panic if index is out of bounds."
 #intrinsic("%fixedarray.set")
 pub fn FixedArray::op_set[T](self : FixedArray[T], idx : Int, val : T) -> Unit = "%fixedarray.set"
 
@@ -1692,6 +1681,17 @@ pub fn FixedArray::length[T](self : FixedArray[T]) -> Int = "%fixedarray.length"
 ///   ignore(FixedArray::make(-1, 0))
 /// }
 /// ```
+/// 
+/// WARNING: A common pitfall is creating with the same initial value, for example:
+/// ```moonbit
+/// test {
+///   let two_dimension_array = FixedArray::make(10, FixedArray::make(10, 0))
+///   two_dimension_array[0][5] = 10
+///   assert_eq!(two_dimension_array[5][5], 10)
+/// }
+/// ```
+/// This is because all the cells reference to the same object (the FixedArray[Int] in this case). 
+/// One should use makei() instead which creates an object for each index.
 pub fn FixedArray::make[T](len : Int, init : T) -> FixedArray[T] = "%fixedarray.make"
 
 // String primitive ops
@@ -1723,15 +1723,12 @@ pub fn String::length(self : String) -> Int = "%string_length"
 pub fn String::charcode_length(self : String) -> Int = "%string_length"
 
 ///|
-/// Retrieves the character at the specified index in a string. Each character in
-/// the string is represented as a UTF-16 code unit.
+/// Retrieves the charcode (UTF-16 code unit) at the specified index in a string.
 ///
 /// Parameters:
 ///
-/// * `string` : The string from which to retrieve the character.
-/// * `index` : The position in the string from which to retrieve the character.
-///
-/// Returns the character at the specified index.
+/// * `string` : The string from which to retrieve the charcode.
+/// * `index` : The position in the string from which to retrieve the charcode.
 ///
 /// Throws a runtime error if `index` is negative or greater than or equal to the
 /// length of the string.
@@ -1741,8 +1738,8 @@ pub fn String::charcode_length(self : String) -> Int = "%string_length"
 /// ```moonbit
 /// test "String::op_get" {
 ///   let s = "Hello, 世界!"
-///   inspect!(s[0], content="H")
-///   inspect!(s[7], content="世")
+///   inspect!(s[0].to_char(), content="Some('H')")
+///   inspect!(s[7], content="19990")
 /// }
 ///
 /// test "panic String::op_get/out_of_bounds" {
@@ -1751,8 +1748,7 @@ pub fn String::charcode_length(self : String) -> Int = "%string_length"
 /// }
 /// ```
 ///
-/// @alert unsafe "Panic if index is out of bounds"
-pub fn String::op_get(self : String, idx : Int) -> Char = "%string_get"
+pub fn String::op_get(self : String, idx : Int) -> Int = "%string_get"
 
 ///|
 /// Retrieves the character at the specified index in a string.
@@ -1808,7 +1804,7 @@ pub fn String::get(self : String, idx : Int) -> Char = "%string_get"
 /// }
 /// ```
 ///
-/// @alert unsafe "Panic if index is out of bounds."
+#internal(unsafe, "Panic if index is out of bounds.")
 pub fn String::unsafe_charcode_at(self : String, idx : Int) -> Int = "%string.unsafe_get"
 
 ///|
@@ -1905,6 +1901,18 @@ priv extern type UnsafeMaybeUninit[_]
 /// }
 /// ```
 pub fn Byte::to_int(self : Byte) -> Int = "%byte_to_int"
+
+///|
+/// Converts a byte value to a character.
+///
+/// Parameters:
+///
+/// * `byte` : The byte value to be converted.
+///
+/// Returns the character corresponding to the byte value.
+pub fn Byte::to_char(self : Byte) -> Char {
+  self.to_int().unsafe_to_char()
+}
 
 ///|
 /// Converts a byte value to a 64-bit signed integer by first converting it to a

@@ -58,11 +58,13 @@ fn is_trailing_surrogate(c : Int) -> Bool {
 
 ///|
 fn code_point_of_surrogate_pair(leading : Int, trailing : Int) -> Char {
-  Char::from_int((leading - 0xD800) * 0x400 + trailing - 0xDC00 + 0x10000)
+  ((leading - 0xD800) * 0x400 + trailing - 0xDC00 + 0x10000).unsafe_to_char()
 }
 
 ///|
 /// Returns the UTF-16 code unit at the given index.
+/// 
+/// This function will panic if the index is out of bounds.
 ///
 /// # Examples
 ///
@@ -73,9 +75,6 @@ fn code_point_of_surrogate_pair(leading : Int, trailing : Int) -> Char {
 /// inspect!(s.charcode_at(6), content="56611"); // Second surrogate of 🤣
 /// ```
 ///
-/// # Panics
-///
-/// @alert unsafe "Panics if the index is out of bounds."
 pub fn String::charcode_at(self : String, index : Int) -> Int = "%string_get"
 
 ///|
@@ -126,7 +125,7 @@ pub fn String::codepoint_at(self : String, index : Int) -> Char {
         abort("invalid surrogate pair")
       }
     } else {
-      Char::from_int(c1)
+      c1.unsafe_to_char()
     }
   }
 }
@@ -139,7 +138,7 @@ pub fn String::unsafe_char_at(self : String, index : Int) -> Char {
     let c2 = self.unsafe_charcode_at(index + 1)
     code_point_of_surrogate_pair(c1, c2)
   } else {
-    Char::from_int(c1)
+    c1.unsafe_to_char()
   }
 }
 

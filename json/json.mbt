@@ -70,7 +70,7 @@ pub fn as_object(self : JsonValue) -> Map[String, JsonValue]? {
 /// Try to get this element as a Json Object and get the element with the `key` as a Json Value
 pub fn value(self : JsonValue, key : String) -> JsonValue? {
   match self.as_object() {
-    Some(obj) => obj[key]
+    Some(obj) => obj.get(key)
     None => None
   }
 }
@@ -160,9 +160,9 @@ pub fn stringify(
 fn escape(str : String, escape_slash~ : Bool) -> String {
   fn to_hex_digit(i : Int) -> Char {
     if i < 10 {
-      Char::from_int('0'.to_int() + i)
+      ('0'.to_int() + i).unsafe_to_char()
     } else {
-      Char::from_int('a'.to_int() + (i - 10))
+      ('a'.to_int() + (i - 10)).unsafe_to_char()
     }
   }
 

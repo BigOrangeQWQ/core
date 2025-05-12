@@ -13,7 +13,7 @@
 // limitations under the License.
 
 ///| Extensible buffer.
-/// @alert deprecated "Use type `T` instead"
+#deprecated("Use type `T` instead")
 pub(all) typealias Buffer = T
 
 ///|
@@ -670,6 +670,18 @@ pub impl Logger for T with write_substring(
   guard start >= 0 && len >= 0 && start + len <= value.length()
   self.grow_if_necessary(self.len + len * 2)
   self.data.blit_from_string(self.len, value, start, len)
+  self.len += len * 2
+}
+
+///|
+pub fn write_stringview(self : T, value : @string.View) -> Unit {
+  let len = value.length()
+  self.grow_if_necessary(self.len + len * 2)
+  for i = 0, j = self.len; i < len; i = i + 1, j = j + 2 {
+    let c = value.unsafe_charcode_at(i).reinterpret_as_uint()
+    self.data[j] = (c & 0xff).to_byte()
+    self.data[j + 1] = (c >> 8).to_byte()
+  }
   self.len += len * 2
 }
 

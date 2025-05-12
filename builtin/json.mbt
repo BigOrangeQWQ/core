@@ -171,6 +171,11 @@ pub impl ToJson for Bool with to_json(self : Bool) -> Json {
 }
 
 ///|
+pub impl ToJson for Byte with to_json(self : Byte) -> Json {
+  Number(self.to_double())
+}
+
+///|
 pub impl ToJson for Int with to_json(self : Int) -> Json {
   Number(self.to_double())
 }
@@ -212,11 +217,6 @@ pub impl ToJson for String with to_json(self : String) -> Json {
 
 ///|
 pub impl ToJson for Char with to_json(self : Char) -> Json {
-  String(self.to_string())
-}
-
-///|
-pub impl ToJson for BigInt with to_json(self : BigInt) -> Json {
   String(self.to_string())
 }
 

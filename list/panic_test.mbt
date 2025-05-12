@@ -13,29 +13,26 @@
 // limitations under the License.
 
 ///|
-#deprecated("use `@hashset.new` instead")
-#coverage.skip
-pub fn T::new[K](capacity~ : Int = default_init_capacity) -> T[K] {
-  new(capacity~)
+test "last None" {
+  assert_eq!(@list.empty().last(), (None : Unit?))
 }
 
 ///|
-#deprecated("use `@hashset.from_array` instead")
-#coverage.skip
-pub fn T::from_array[K : Hash + Eq](arr : Array[K]) -> T[K] {
-  from_array(arr)
+test "panic nth_exn" {
+  @list.empty().unsafe_nth(0)
 }
 
 ///|
-#deprecated("use `@hashset.of` instead")
-#coverage.skip
-pub fn T::of[K : Hash + Eq](arr : FixedArray[K]) -> T[K] {
-  of(arr)
+test "panic @list.exn with empty list" {
+  @list.empty().unsafe_head()
 }
 
 ///|
-#deprecated("use `@hashset.from_iter` instead")
-#coverage.skip
-pub fn T::from_iter[K : Hash + Eq](iter : Iter[K]) -> T[K] {
-  from_iter(iter)
+test "panic @list.unsafe_maximum with empty list" {
+  inspect!((@list.empty() : @list.T[Int]).unsafe_maximum())
+}
+
+///|
+test "panic @list.unsafe_minimum with empty list" {
+  inspect!((@list.empty() : @list.T[Int]).unsafe_minimum())
 }

@@ -13,15 +13,20 @@
 // limitations under the License.
 
 ///|
-#deprecated("use `@rational.new` instead")
-#coverage.skip
-pub fn T::new(numerator : Int64, denominator : Int64) -> T? {
-  new(numerator, denominator)
+/// Aborts the program with an error message. Always causes a panic, regardless
+/// of the message provided.
+///
+/// Parameters:
+///
+/// * `message` : A string containing the error message to be displayed when
+/// aborting.
+///
+/// Returns a value of type `T`. However, this function never actually returns a
+/// value as it always causes a panic.
+pub fn abort[T](msg : String) -> T {
+  let _ = msg
+  panic_impl()
 }
 
 ///|
-#deprecated("use `@rational.from_double` instead")
-#coverage.skip
-pub fn T::from_double(value : Double) -> T!RationalError {
-  from_double!(value)
-}
+fn panic_impl[T]() -> T = "%panic"

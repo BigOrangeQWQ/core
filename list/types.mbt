@@ -13,8 +13,7 @@
 // limitations under the License.
 
 ///|
-#deprecated("use `@sorted_map.from_iter` instead")
-#coverage.skip
-pub fn T::from_iter[K : Compare, V](iter : Iter[(K, V)]) -> T[K, V] {
-  from_iter(iter)
-}
+pub enum T[A] {
+  Empty
+  More(A, mut tail~ : T[A])
+} derive(Eq)

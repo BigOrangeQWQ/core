@@ -36,7 +36,8 @@ pub fn from_array[V : Compare](array : Array[V]) -> T[V] {
   set
 }
 
-///| @alert deprecated "Use @sorted_set.from_array instead"
+///|
+#deprecated("Use @sorted_set.from_array instead")
 pub fn of[V : Compare](array : Array[V]) -> T[V] {
   let set = new()
   for i in 0..<array.length() {
@@ -463,18 +464,6 @@ pub impl[X : @quickcheck.Arbitrary + Compare] @quickcheck.Arbitrary for T[X] wit
 ///|
 impl[T : Show] Show for Node[T] with output(self, logger) {
   logger.write_iter(self.iter(), prefix="@sorted_set.of([", suffix="])")
-}
-
-///|
-fn Node::to_array[T](self : Node[T]) -> Array[T] {
-  fn aux(n : Node[T]?) -> Array[_] {
-    match n {
-      None => []
-      Some({ value, left, right, .. }) => aux(left) + [value] + aux(right)
-    }
-  }
-
-  aux(Some(self))
 }
 
 ///|

@@ -64,9 +64,9 @@ pub impl Show for UInt16 with output(self, logger) {
 ///|
 fn to_hex_digit(i : Int) -> Char {
   if i < 10 {
-    Char::from_int(i + '0')
+    (i + '0').unsafe_to_char()
   } else {
-    Char::from_int(i + 'a' - 10)
+    (i + 'a' - 10).unsafe_to_char()
   }
 }
 
@@ -107,7 +107,7 @@ pub impl Show for String with output(self, logger) {
     match self.unsafe_charcode_at(i) {
       '"' | '\\' as c => {
         flush_segment(i)
-        logger..write_char('\\').write_char(Char::from_int(c))
+        logger..write_char('\\').write_char(c.unsafe_to_char())
       }
       '\n' => {
         flush_segment(i)
@@ -129,10 +129,10 @@ pub impl Show for String with output(self, logger) {
         if code < ' ' {
           flush_segment(i)
           logger
-          ..write_char('\\')
-          ..write_char('x')
+          ..write_string("\\u{")
           ..write_char(to_hex_digit(code / 16))
-          .write_char(to_hex_digit(code % 16))
+          ..write_char(to_hex_digit(code % 16))
+          .write_char('}')
         }
     }
   }
@@ -203,20 +203,24 @@ pub impl[X : Show] Show for Array[X] with output(self, logger) {
   logger.write_iter(self.iter())
 }
 
-///|
-/// Convert Char to String
-/// @intrinsic %char.to_string
+///| Convert Char to String
 pub impl Show for Char with to_string(self : Char) -> String {
-  [self]
+  char_to_string(self)
+}
+
+///| TODO: support attributes for impl
+#intrinsic("%char.to_string")
+fn char_to_string(char : Char) -> String {
+  [char]
 }
 
 ///|
 pub impl Show for Char with output(self, logger) {
   fn to_hex_digit(i : Int) -> Char {
     if i < 10 {
-      Char::from_int('0'.to_int() + i)
+      (i + '0').unsafe_to_char()
     } else {
-      Char::from_int('a'.to_int() + (i - 10))
+      (i + 'a' - 10).unsafe_to_char()
     }
   }
 
@@ -231,10 +235,10 @@ pub impl Show for Char with output(self, logger) {
       let code = self.to_int()
       if code < 0x20 {
         logger
-        ..write_char('\\')
-        ..write_char('x')
+        ..write_string("\\u{")
         ..write_char(to_hex_digit(code / 16))
-        .write_char(to_hex_digit(code % 16))
+        ..write_char(to_hex_digit(code % 16))
+        .write_char('}')
       } else {
         logger.write_char(self)
       }

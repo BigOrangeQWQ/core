@@ -231,9 +231,19 @@ test "map" {
   let iter = test_from_array(['1', '2', '3', '4', '5'])
   let exb = StringBuilder::new(size_hint=0)
   iter
-  .map(fn { x => Char::from_int(x.to_int() + 1) })
+  .map(fn { x => (x.to_int() + 1).to_char().unwrap() })
   .each(fn { x => exb.write_char(x) })
   inspect!(exb, content="23456")
+}
+
+///|
+test "mapi" {
+  let iter = test_from_array(['1', '2', '3', '4', '5'])
+  let exb = StringBuilder::new(size_hint=0)
+  iter
+  .mapi(fn { i, x => (i + x.to_int()).to_char().unwrap() })
+  .each(fn { x => exb.write_char(x) })
+  inspect!(exb, content="13579")
 }
 
 ///|
@@ -246,7 +256,7 @@ test "filter_map" {
   inspect!(r1, content="[3, 4, 5]")
   let r2 : Array[Unit] = arr.iter().filter_map(fn(_x) { None }).collect()
   inspect!(r2, content="[]")
-  let r3 : Array[Unit] = [].iter().filter_map(Option::Some).collect()
+  let r3 : Array[Unit] = [].iter().filter_map(Option::Some(_)).collect()
   inspect!(r3, content="[]")
 }
 
@@ -273,9 +283,7 @@ test "flat_map2" {
 ///|
 test "fold" {
   let iter = test_from_array(['1', '2', '3', '4', '5'])
-  let result = Char::from_int(
-    iter.fold(fn { acc, x => acc + x.to_int() }, init=0) / 5,
-  )
+  let result = (iter.fold(fn { acc, x => acc + x.to_int() }, init=0) / 5).unsafe_to_char()
   assert_eq!(result, '3')
 }
 
@@ -747,4 +755,71 @@ test "Float::until with early break" {
 test "Float::until negative step" {
   let result = 10.0.until(0.0, step=-2.0).collect()
   inspect!(result, content="[10, 8, 6, 4, 2]")
+}
+
+///|
+test "group_by with consecutive identical elements" {
+  let iter = [1, 1, 2, 2, 3, 3].iter()
+  let grouped = iter.group_by(fn(x) { x })
+  assert_eq!(grouped.get(1), Some([1, 1]))
+  assert_eq!(grouped.get(2), Some([2, 2]))
+  assert_eq!(grouped.get(3), Some([3, 3]))
+}
+
+///|
+test "group_by with non-consecutive identical elements" {
+  let iter = [1, 2, 1, 3, 2, 1].iter()
+  let grouped = iter.group_by(fn(x) { x })
+  assert_eq!(grouped.get(1), Some([1, 1, 1]))
+  assert_eq!(grouped.get(2), Some([2, 2]))
+  assert_eq!(grouped.get(3), Some([3]))
+}
+
+///|
+test "group_by with empty input" {
+  let iter : Iter[Int] = Iter::empty()
+  let grouped = iter.group_by(fn(x) { x })
+  assert_eq!(grouped.size(), 0)
+}
+
+///|
+test "group_by with single element input" {
+  let iter = [42].iter()
+  let grouped = iter.group_by(fn(x) { x })
+  assert_eq!(grouped.get(42), Some([42]))
+}
+
+///|
+test "group_by with custom key function" {
+  let iter = [1, 2, 3, 4].iter()
+  let grouped = iter.group_by(fn(x) { x % 2 })
+  assert_eq!(grouped.get(0), Some([2, 4]))
+  assert_eq!(grouped.get(1), Some([1, 3]))
+}
+
+///|
+test "group_by with strings" {
+  let iter = ["apple", "avocado", "banana", "cherry", "blueberry"].iter()
+  let grouped = iter.group_by(fn(s) { s[0] })
+  assert_eq!(grouped.get('a'), Some(["apple", "avocado"]))
+  assert_eq!(grouped.get('b'), Some(["banana", "blueberry"]))
+  assert_eq!(grouped.get('c'), Some(["cherry"]))
+}
+
+///|
+test "group_by with complex objects" {
+  struct Person {
+    name : String
+    age : Int
+  }
+  let people = [
+    Person::{ name: "Alice", age: 25 },
+    Person::{ name: "Bob", age: 25 },
+    Person::{ name: "Charlie", age: 30 },
+    Person::{ name: "Dave", age: 35 },
+    Person::{ name: "Eve", age: 30 },
+  ].iter()
+  let grouped = people.group_by(fn(p) { p.age })
+  let groups = grouped.values().map(fn(a) { a.map(fn(p) { p.name }) }).collect()
+  assert_eq!(groups, [["Alice", "Bob"], ["Charlie", "Eve"], ["Dave"]])
 }

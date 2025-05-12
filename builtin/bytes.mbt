@@ -235,7 +235,7 @@ pub fn Bytes::copy(self : Bytes) -> Bytes {
 /// 
 /// test "panic FixedArray::set_utf8_char/invalid_char" {
 ///   let buf = FixedArray::make(4, b'\x00')
-///   ignore(buf.set_utf8_char(0, Char::from_int(0x110000))) // Invalid Unicode code point
+///   ignore(buf.set_utf8_char(0, (0x110000).unsafe_to_char())) // Invalid Unicode code point
 /// }
 /// ```
 pub fn FixedArray::set_utf8_char(
@@ -274,7 +274,8 @@ pub fn FixedArray::set_utf8_char(
 ///|
 /// Fill UTF16LE encoded char `value` into byte sequence `self`, starting at `offset`.
 /// It return the length of bytes has been written.
-/// @alert unsafe "Panic if the [value] is out of range"
+/// 
+/// This function will panic if the `value` is out of range.
 pub fn FixedArray::set_utf16le_char(
   self : FixedArray[Byte],
   offset : Int,
@@ -302,7 +303,8 @@ pub fn FixedArray::set_utf16le_char(
 ///|
 /// Fill UTF16BE encoded char `value` into byte sequence `self`, starting at `offset`.
 /// It return the length of bytes has been written.
-/// @alert unsafe "Panic if the [value] is out of range"
+/// 
+/// This function will panic if the `value` is out of range.
 pub fn FixedArray::set_utf16be_char(
   self : FixedArray[Byte],
   offset : Int,

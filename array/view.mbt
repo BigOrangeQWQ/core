@@ -344,6 +344,26 @@ pub fn View::filter[T](self : View[T], f : (T) -> Bool) -> Array[T] {
 }
 
 ///|
+/// Copy the view elements to a new array
+///
+/// # Example
+/// ```
+/// let view = [1, 2, 3, 4, 5, 6][2:4]
+/// let arr = view.to_array()
+/// assert_eq!(arr, [3, 4])
+/// ```
+pub fn View::to_array[T](self : View[T]) -> Array[T] {
+  let len = self.length()
+  if len == 0 {
+    []
+  } else {
+    let arr = Array::make(len, self[0])
+    self.iter().eachi(fn(i, v) { arr[i] = v })
+    arr
+  }
+}
+
+///|
 pub impl[X : Show] Show for View[X] with output(self, logger) {
   logger.write_iter(self.iter())
 }
@@ -375,4 +395,19 @@ pub impl[T : Compare] Compare for View[T] with compare(self, other) -> Int {
   } else {
     0
   }
+}
+
+///|
+pub impl[A : Hash] Hash for View[A] with hash_combine(self, hasher) {
+  for e in self {
+    hasher.combine(e)
+  }
+}
+
+///|
+pub impl[A : @quickcheck.Arbitrary] @quickcheck.Arbitrary for View[A] with arbitrary(
+  size,
+  rs
+) {
+  Array::arbitrary(size, rs)[:]
 }

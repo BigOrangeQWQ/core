@@ -13,29 +13,19 @@
 // limitations under the License.
 
 ///|
-#deprecated("use `@queue.new` instead")
-#coverage.skip
-pub fn T::new[A]() -> T[A] {
-  new()
+fn check_invariant(_a : BigInt) -> Unit! {
+  assert_true!(true)
 }
 
 ///|
-#deprecated("use `@queue.from_array` instead")
-#coverage.skip
-pub fn T::from_array[A](arr : Array[A]) -> T[A] {
-  from_array(arr)
+let zero = 0N
+
+///|
+test "BigInt::to_uint" {
+  assert_eq!(BigInt::from_int64(-1L).to_uint(), (-1).reinterpret_as_uint())
 }
 
 ///|
-#deprecated("use `@queue.from_iter` instead")
-#coverage.skip
-pub fn T::from_iter[A](iter : Iter[A]) -> T[A] {
-  from_iter(iter)
-}
-
-///|
-#deprecated("use `@queue.of` instead")
-#coverage.skip
-pub fn T::of[A](arr : FixedArray[A]) -> T[A] {
-  of(arr)
+test "BigInt::to_int64" {
+  assert_eq!(BigInt::from_int64(-1).to_int64(), -1L)
 }

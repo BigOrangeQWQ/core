@@ -16,8 +16,8 @@
 /// Returns the offset (charcode index) of the first occurrence of the given
 /// substring. If the substring is not found, it returns None.
 pub fn View::find(self : View, str : View) -> Int? {
-  let len = self.len()
-  let sub_len = str.len()
+  let len = self.length()
+  let sub_len = str.length()
   // Handle empty substring case
   guard sub_len > 0 else { return Some(0) }
   // If substring is longer than string, it can't be found
@@ -69,11 +69,44 @@ test "find" {
 }
 
 ///|
+/// Returns the offset of the first character that satisfies the given predicate.
+/// If no such character is found, it returns None.
+pub fn View::find_by(self : View, pred : (Char) -> Bool) -> Int? {
+  for i, c in self {
+    if pred(c) {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+/// Returns the offset of the first character that satisfies the given predicate.
+/// If no such character is found, it returns None.
+pub fn String::find_by(self : String, pred : (Char) -> Bool) -> Int? {
+  self[:].find_by(pred)
+}
+
+///|
+test "find_by" {
+  inspect!("hello".find_by(fn(c) { c == 'o' }), content="Some(4)")
+  inspect!("hello".find_by(fn(c) { c == 'l' }), content="Some(2)")
+  inspect!("hello".find_by(fn(c) { c == 'z' }), content="None")
+  inspect!("".find_by(fn(c) { c == 'a' }), content="None")
+  inspect!("hello".find_by(fn(c) { c is ('0'..='9') }), content="None")
+  inspect!("hello123".find_by(fn(c) { c is ('0'..='9') }), content="Some(5)")
+  inspect!("hello".find_by(fn(c) { c is ('A'..='Z') }), content="None")
+  inspect!("Hello".find_by(fn(c) { c is ('A'..='Z') }), content="Some(0)")
+  inspect!("αβγ".find_by(fn(c) { c == 'β' }), content="Some(1)")
+  inspect!("😀😁😂".find_by(fn(c) { c == '😂' }), content="Some(2)")
+}
+
+///|
 /// Returns the offset of the last occurrence of the given substring. If the
 /// substring is not found, it returns None.
 pub fn View::rev_find(self : View, str : View) -> Int? {
-  let len = self.len()
-  let sub_len = str.len()
+  let len = self.length()
+  let sub_len = str.length()
   guard sub_len > 0 else { return Some(len) }
   guard sub_len <= len else { return None }
   let min_idx = sub_len - 1
@@ -123,7 +156,7 @@ test "rev_find" {
 ///| 
 /// Returns true if the given substring is suffix of this string.
 pub fn View::has_suffix(self : View, str : View) -> Bool {
-  self.rev_find(str) is Some(i) && i == self.len() - str.len()
+  self.rev_find(str) is Some(i) && i == self.length() - str.length()
 }
 
 ///|
@@ -174,6 +207,33 @@ test "has_prefix" {
 }
 
 ///|
+/// Returns true if this string contains the given substring.
+pub fn View::contains(self : View, str : View) -> Bool {
+  self.find(str) is Some(_)
+}
+
+///|
+/// Returns true if this string contains the given substring.
+pub fn contains(self : String, str : View) -> Bool {
+  self[:].contains(str)
+}
+
+///|
+test "contains" {
+  inspect!("hello".contains("o"), content="true")
+  inspect!("hello".contains("l"), content="true")
+  inspect!("hello".contains("hello"), content="true")
+  inspect!("hello".contains("h"), content="true")
+  inspect!("hello".contains(""), content="true")
+  inspect!("hello".contains("world"), content="false")
+  inspect!("".contains(""), content="true")
+  inspect!("".contains("a"), content="false")
+  inspect!("hello hello".contains("hello"), content="true")
+  inspect!("aaa".contains("aa"), content="true")
+  inspect!("😀😀".contains("😀"), content="true")
+}
+
+///|
 /// Returns true if this string contains the given character.
 pub fn View::contains_char(self : View, c : Char) -> Bool {
   self.iter().any(fn(ch) { ch == c })
@@ -197,7 +257,7 @@ test "contains_char" {
   inspect!("hello world".contains_char('w'), content="true")
   inspect!("😀😀".contains_char('😀'), content="true")
   inspect!("😀😀".contains_char('😃'), content="false")
-  inspect!("hello".contains_char(Char::from_int(104)), content="true") // 'h' is 104 in ASCII
+  inspect!("hello".contains_char((104).unsafe_to_char()), content="true") // 'h' is 104 in ASCII
 }
 
 ///|
@@ -337,7 +397,7 @@ test "trim_space" {
 ///|
 /// Returns true if this string is empty.
 pub fn View::is_empty(self : View) -> Bool {
-  self.len() == 0
+  self.length() == 0
 }
 
 ///|
@@ -497,12 +557,12 @@ test "pad_end" {
 
 ///|
 /// Returns a new string with `self` repeated `n` times.
-pub fn View::repeat(self : View, n : Int) -> String {
+pub fn View::repeat(self : View, n : Int) -> View {
   match n {
     _..=0 => ""
-    1 => self.to_string()
+    1 => self
     _ => {
-      let len = self.len()
+      let len = self.length()
       let buf = StringBuilder::new(size_hint=len * n)
       let str = self.to_string()
       for _ in 0..<n {
@@ -516,7 +576,19 @@ pub fn View::repeat(self : View, n : Int) -> String {
 ///|
 /// Returns a new string with `self` repeated `n` times.
 pub fn repeat(self : String, n : Int) -> String {
-  self[:].repeat(n)
+  match n {
+    _..=0 => ""
+    1 => self
+    _ => {
+      let len = self.length()
+      let buf = StringBuilder::new(size_hint=len * n)
+      let str = self.to_string()
+      for _ in 0..<n {
+        buf.write_string(str)
+      }
+      buf.to_string()
+    }
+  }
 }
 
 ///|
@@ -548,7 +620,7 @@ test "repeat" {
 /// Returns a new string with the characters in reverse order. It respects
 /// Unicode characters and surrogate pairs but not grapheme clusters.
 pub fn View::rev(self : View) -> String {
-  let buf = StringBuilder::new(size_hint=self.len())
+  let buf = StringBuilder::new(size_hint=self.length())
   for c in self.rev_iter() {
     buf.write_char(c)
   }
@@ -580,7 +652,7 @@ test "rev" {
 /// If the separator is empty, the returned iterator will contain all the
 /// characters in the string as single elements.
 pub fn View::split(self : View, sep : View) -> Iter[View] {
-  let sep_len = sep.len()
+  let sep_len = sep.length()
   if sep_len == 0 {
     return self.iter().map(fn(c) { c.to_string().view() })
   }
@@ -592,11 +664,7 @@ pub fn View::split(self : View, sep : View) -> Iter[View] {
       }
       view = view.view(start_offset=end + sep_len)
     } else {
-      if view.is_empty() {
-        IterContinue
-      } else {
-        yield_(view)
-      }
+      yield_(view)
     }
   })
 }
@@ -629,12 +697,14 @@ test "split" {
   assert_eq!(",a,b,c".split(",").map(View::to_string).collect(), [
     "", "a", "b", "c",
   ])
-  assert_eq!("a,b,c,".split(",").map(View::to_string).collect(), ["a", "b", "c"])
+  assert_eq!("a,b,c,".split(",").map(View::to_string).collect(), [
+    "a", "b", "c", "",
+  ])
   assert_eq!("a,b,c".split("").map(View::to_string).collect(), [
     "a", ",", "b", ",", "c",
   ])
   assert_eq!("".split("").map(View::to_string).collect(), [])
-  assert_eq!("".split(",").map(View::to_string).collect(), [])
+  assert_eq!("".split(",").map(View::to_string).collect(), [""])
   assert_eq!("😀,😃,😄".split(",").map(View::to_string).collect(), [
     "😀", "😃", "😄",
   ])
@@ -648,15 +718,15 @@ test "split" {
 /// 
 /// If `old` is empty, it matches the beginning of the string, and `new` is
 /// prepended to the string.
-pub fn View::replace(self : View, old~ : View, new~ : View) -> String {
+pub fn View::replace(self : View, old~ : View, new~ : View) -> View {
   match self.find(old) {
     Some(end) =>
       [
         ..self.view(end_offset=end),
         ..new,
-        ..self.view(start_offset=end + old.len()),
+        ..self.view(start_offset=end + old.length()),
       ]
-    None => self.to_string()
+    None => self
   }
 }
 
@@ -666,18 +736,26 @@ pub fn View::replace(self : View, old~ : View, new~ : View) -> String {
 /// If `old` is empty, it matches the beginning of the string, and `new` is
 /// prepended to the string.
 pub fn replace(self : String, old~ : View, new~ : View) -> String {
-  self[:].replace(old~, new~)
+  match self.find(old) {
+    Some(end) =>
+      [
+        ..self.view(end_offset=end),
+        ..new,
+        ..self.view(start_offset=end + old.length()),
+      ]
+    None => self
+  }
 }
 
 ///|
 test "replace" {
-  assert_eq!("hello".replace(old="o", new="a"), "hella")
-  assert_eq!("hello".replace(old="l", new="a"), "healo")
-  assert_eq!("hello".replace(old="hello", new="a"), "a")
-  assert_eq!("hello".replace(old="h", new="a"), "aello")
-  assert_eq!("hello".replace(old="", new="a"), "ahello")
-  assert_eq!("hello".replace(old="world", new="a"), "hello")
-  assert_eq!("".replace(old="", new="a"), "a")
+  inspect!("hello".replace(old="o", new="a"), content="hella")
+  inspect!("hello".replace(old="l", new="a"), content="healo")
+  inspect!("hello".replace(old="hello", new="a"), content="a")
+  inspect!("hello".replace(old="h", new="a"), content="aello")
+  inspect!("hello".replace(old="", new="a"), content="ahello")
+  inspect!("hello".replace(old="world", new="a"), content="hello")
+  inspect!("".replace(old="", new="a"), content="a")
 }
 
 ///|
@@ -686,33 +764,39 @@ test "replace" {
 /// If `old` is empty, it matches at the beginning of the string and after each
 /// character in the string, so `new` is inserted at the beginning of the string
 /// and after each character.
-pub fn View::replace_all(self : View, old~ : View, new~ : View) -> String {
-  let buf = StringBuilder::new(size_hint=self.len())
-  let len = self.len()
-  let old_len = old.len()
-  // todo: improve performance
+pub fn View::replace_all(self : View, old~ : View, new~ : View) -> View {
+  let len = self.length()
+  let buf = StringBuilder::new(size_hint=len)
+  let old_len = old.length()
+  let new = new.to_string()
+  // todo: improve performance by providing write_view method to StringBuilder
   if old_len == 0 {
-    buf.write_string(new.to_string())
-    self
-    .iter()
-    .each(fn(c) {
+    buf.write_string(new)
+    for c in self {
       buf.write_char(c)
-      buf.write_string(new.to_string())
-    })
-  } else {
-    let mut view = self
-    while view.find(old) is Some(end) {
-      buf.write_string(view.view(end_offset=end).to_string())
-      buf.write_string(new.to_string())
-      if end + old_len <= len {
-        view = view.view(start_offset=end + old_len)
-      } else {
-        break
-      }
+      buf.write_string(new)
     }
-    buf.write_string(view.to_string())
+    buf.to_string()
+  } else {
+    let first_end = self.find(old)
+    if first_end is Some(end) {
+      for view = self, end = end {
+        buf.write_string(view.view(end_offset=end).to_string())
+        buf.write_string(new)
+        // check if there is no more characters after the last occurrence of `old`
+        guard end + old_len <= len else { break }
+        let next_view = view.view(start_offset=end + old_len)
+        guard next_view.find(old) is Some(next_end) else {
+          buf.write_string(next_view.to_string())
+          break
+        }
+        continue next_view, next_end
+      }
+      buf.to_string()
+    } else {
+      self
+    }
   }
-  buf.to_string()
 }
 
 ///|
@@ -722,7 +806,38 @@ pub fn View::replace_all(self : View, old~ : View, new~ : View) -> String {
 /// character in the string, so `new` is inserted at the beginning of the string
 /// and after each character.
 pub fn replace_all(self : String, old~ : View, new~ : View) -> String {
-  self[:].replace_all(old~, new~)
+  let len = self.length()
+  let buf = StringBuilder::new(size_hint=len)
+  let old_len = old.length()
+  let new = new.to_string()
+  // todo: improve performance
+  if old_len == 0 {
+    buf.write_string(new)
+    for c in self {
+      buf.write_char(c)
+      buf.write_string(new)
+    }
+    buf.to_string()
+  } else {
+    let first_end = self.find(old)
+    if first_end is Some(end) {
+      for view = self[:], end = end {
+        buf.write_string(view.view(end_offset=end).to_string())
+        buf.write_string(new)
+        // check if there is no more characters after the last occurrence of `old`
+        guard end + old_len <= len else { break }
+        let next_view = view.view(start_offset=end + old_len)
+        guard next_view.find(old) is Some(next_end) else {
+          buf.write_string(next_view.to_string())
+          break
+        }
+        continue next_view, next_end
+      }
+      buf.to_string()
+    } else {
+      self
+    }
+  }
 }
 
 ///|
@@ -732,6 +847,14 @@ test "replace_all" {
   assert_eq!("hello".replace_all(old="ll", new="rr"), "herro")
   assert_eq!("hello".replace_all(old="hello", new="world"), "world")
   assert_eq!("hello hello hello".replace_all(old="hello", new="hi"), "hi hi hi")
+  assert_eq!(
+    "hello hello helloi".replace_all(old="hello", new="hi"),
+    "hi hi hii",
+  )
+  assert_eq!(
+    "hi hi hii".replace_all(old="hi", new="hello"),
+    "hello hello helloi",
+  )
   assert_eq!("hello".replace_all(old="", new="a"), "ahaealalaoa")
   assert_eq!("hello".replace_all(old="world", new="a"), "hello")
   assert_eq!("".replace_all(old="", new="a"), "a")
@@ -746,14 +869,50 @@ test "replace_all" {
 }
 
 ///|
+test "View::replace_all" {
+  assert_eq!("hello"[:].replace_all(old="o", new="a"), "hella")
+  assert_eq!("hello"[:].replace_all(old="l", new="a"), "heaao")
+  assert_eq!("hello"[:].replace_all(old="ll", new="rr"), "herro")
+  assert_eq!("hello"[:].replace_all(old="hello", new="world"), "world")
+  assert_eq!(
+    "hello hello hello"[:].replace_all(old="hello", new="hi"),
+    "hi hi hi",
+  )
+  assert_eq!(
+    "hello hello helloi"[:].replace_all(old="hello", new="hi"),
+    "hi hi hii",
+  )
+  assert_eq!(
+    "hi hi hii"[:].replace_all(old="hi", new="hello"),
+    "hello hello helloi",
+  )
+  assert_eq!("hello"[:].replace_all(old="", new="a"), "ahaealalaoa")
+  assert_eq!("hello"[:].replace_all(old="world", new="a"), "hello")
+  assert_eq!(""[:].replace_all(old="", new="a"), "a")
+  assert_eq!("aaa"[:].replace_all(old="a", new="b"), "bbb")
+  assert_eq!("aaa"[:].replace_all(old="a", new="bb"), "bbbbbb")
+  assert_eq!("aaa"[:].replace_all(old="aa", new="b"), "ba")
+  assert_eq!(
+    "🤣🤣🤣"[:].replace_all(old="🤣", new="😊"),
+    "😊😊😊",
+  )
+  assert_eq!("abc123abc"[:].replace_all(old="abc", new="xyz"), "xyz123xyz")
+  assert_eq!("abcabcabc"[:].replace_all(old="abc", new=""), "")
+  assert_eq!("abc"[:].replace_all(old="abc", new=""), "")
+  assert_eq!("abc"[:].replace_all(old="", new="x"), "xaxbxcx")
+}
+
+///|
 /// Converts this string to lowercase.
-pub fn View::to_lower(self : View) -> String {
+pub fn View::to_lower(self : View) -> View {
   // TODO: deal with non-ascii characters
-  let buf = StringBuilder::new(size_hint=self.len())
-  for c in self {
-    if c is ('A'..='Z') {
+  guard self.find_by(@char.is_ascii_uppercase) is Some(idx) else { return self }
+  let buf = StringBuilder::new(size_hint=self.length())
+  buf.write_string(self.view(end_offset=idx).to_string())
+  for c in self.view(start_offset=idx) {
+    if c.is_ascii_uppercase() {
       // 'A' is 65 in ASCII, 'a' is 97, the difference is 32
-      buf.write_char(Char::from_int(c.to_int() + 32))
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
     } else {
       buf.write_char(c)
     }
@@ -764,7 +923,19 @@ pub fn View::to_lower(self : View) -> String {
 ///|
 /// Converts this string to lowercase.
 pub fn to_lower(self : String) -> String {
-  self[:].to_lower()
+  // TODO: deal with non-ascii characters
+  guard self.find_by(@char.is_ascii_uppercase) is Some(idx) else { return self }
+  let buf = StringBuilder::new(size_hint=self.length())
+  buf.write_string(self.view(end_offset=idx).to_string())
+  for c in self.view(start_offset=idx) {
+    if c.is_ascii_uppercase() {
+      // 'A' is 65 in ASCII, 'a' is 97, the difference is 32
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
+    } else {
+      buf.write_char(c)
+    }
+  }
+  buf.to_string()
 }
 
 ///|
@@ -775,13 +946,22 @@ test "to_lower" {
 }
 
 ///|
+test "View::to_lower" {
+  assert_eq!("Hello"[:].to_lower(), "hello")
+  assert_eq!("HELLO"[:].to_lower(), "hello")
+  assert_eq!("Hello, World!"[:].to_lower(), "hello, world!")
+}
+
+///|
 /// Converts this string to uppercase.
-pub fn View::to_upper(self : View) -> String {
+pub fn View::to_upper(self : View) -> View {
   // TODO: deal with non-ascii characters
-  let buf = StringBuilder::new(size_hint=self.len())
-  for c in self {
-    if c >= 'a' && c <= 'z' {
-      buf.write_char(Char::from_int(c.to_int() - 32))
+  guard self.find_by(@char.is_ascii_lowercase) is Some(idx) else { return self }
+  let buf = StringBuilder::new(size_hint=self.length())
+  buf.write_string(self.view(end_offset=idx).to_string())
+  for c in self.view(start_offset=idx) {
+    if c.is_ascii_lowercase() {
+      buf.write_char((c.to_int() - 32).unsafe_to_char())
     } else {
       buf.write_char(c)
     }
@@ -792,7 +972,18 @@ pub fn View::to_upper(self : View) -> String {
 ///|
 /// Converts this string to uppercase.
 pub fn to_upper(self : String) -> String {
-  self[:].to_upper()
+  // TODO: deal with non-ascii characters
+  guard self.find_by(@char.is_ascii_lowercase) is Some(idx) else { return self }
+  let buf = StringBuilder::new(size_hint=self.length())
+  buf.write_string(self.view(end_offset=idx).to_string())
+  for c in self.view(start_offset=idx) {
+    if c.is_ascii_lowercase() {
+      buf.write_char((c.to_int() - 32).unsafe_to_char())
+    } else {
+      buf.write_char(c)
+    }
+  }
+  buf.to_string()
 }
 
 ///|
@@ -800,6 +991,13 @@ test "to_upper" {
   assert_eq!("hello".to_upper(), "HELLO")
   assert_eq!("HELLO".to_upper(), "HELLO")
   assert_eq!("Hello, World!".to_upper(), "HELLO, WORLD!")
+}
+
+///|
+test "View::to_upper" {
+  assert_eq!("hello"[:].to_upper(), "HELLO")
+  assert_eq!("HELLO"[:].to_upper(), "HELLO")
+  assert_eq!("Hello, World!"[:].to_upper(), "HELLO, WORLD!")
 }
 
 ///|

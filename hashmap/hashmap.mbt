@@ -119,8 +119,6 @@ pub fn from_array[K : Hash + Eq, V](arr : Array[(K, V)]) -> T[K, V] {
 ///   inspect!(map.get("key"), content="Some(24)")
 /// }
 /// ```
-///
-/// @alert unsafe "Panic if the hash map is full."
 pub fn set[K : Hash + Eq, V](self : T[K, V], key : K, value : V) -> Unit {
   self.set_with_hash(key, value, key.hash())
 }
@@ -256,6 +254,7 @@ fn get_with_hash[K : Hash + Eq, V](self : T[K, V], key : K, hash : Int) -> V? {
 ///   inspect!(map["nonexistent"], content="None")
 /// }
 /// ```
+#deprecated("Use `get` instead. `op_get` will return `V` instead of `Option[V]` in the future.")
 pub fn op_get[K : Hash + Eq, V](self : T[K, V], key : K) -> V? {
   self.get(key)
 }
@@ -537,16 +536,19 @@ pub impl[K : @quickcheck.Arbitrary + Hash + Eq, V : @quickcheck.Arbitrary] @quic
 priv type MyString String derive(Eq)
 
 ///|
+#coverage.skip
 impl Hash for MyString with hash(self) {
   self._.length()
 }
 
 ///|
+#coverage.skip
 impl Hash for MyString with hash_combine(self, hasher) {
   hasher.combine_string(self._)
 }
 
 ///|
+#coverage.skip
 impl Show for MyString with output(self, logger) {
   logger.write_string(self._)
 }
@@ -563,7 +565,7 @@ test "arbitrary" {
   inspect!(
     samples[11:15],
     content=
-      #|[HashMap::of([("Q", 1), ("", 0), ("\x1e", 0)]), HashMap::of([("", 0)]), HashMap::of([("F:", 0), ("A&", 2), ("v\b", 0), ("", 0), ("#", 0)]), HashMap::of([("p(", -2), ("^\x1e", 3), ("2x", 1), ("", 3)])]
+      #|[HashMap::of([("Q", 1), ("", 0), ("\u{1e}", 0)]), HashMap::of([("", 0)]), HashMap::of([("F:", 0), ("A&", 2), ("v\b", 0), ("", 0), ("#", 0)]), HashMap::of([("p(", -2), ("^\u{1e}", 3), ("2x", 1), ("", 3)])]
     ,
   )
 }
@@ -647,4 +649,13 @@ test "grow" {
     m.debug_entries(),
     content="_,(0,C,1),(0,Go,2),(0,C++,3),(0,Java,4),(0,Scala,5),(1,Julia,5),(2,Cobol,5),(2,Python,6),(2,Haskell,7),(2,Rescript,8),_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_",
   )
+}
+
+///|
+test "get_or_init" {
+  let m : T[MyString, Int] = new()
+  inspect!(m.get_or_init("a", fn() { 1 }), content="1")
+  inspect!(m.get("a"), content="Some(1)")
+  inspect!(m.get_or_init("a", fn() { 2 }), content="1")
+  inspect!(m.get("a"), content="Some(1)")
 }

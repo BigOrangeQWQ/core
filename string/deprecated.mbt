@@ -84,7 +84,7 @@ fn index_at_rev_(
 }
 
 ///|
-#deprecated("use str.view(start = str.index_of_nth_char(i).unwrap(), end = str.index_of_nth_char(j).unwrap()) to replace str[i:j]")
+#deprecated("use str.charcodes(start = str.offset_of_nth_char(i).unwrap(), end = str.offset_of_nth_char(j).unwrap()) to replace str[i:j]")
 pub fn String::op_as_view(self : String, start~ : Int = 0, end? : Int) -> View {
   let str_len = self.length()
   let start = if start >= 0 {
@@ -108,7 +108,7 @@ pub fn String::op_as_view(self : String, start~ : Int = 0, end? : Int) -> View {
 }
 
 ///|
-#deprecated("use view.view(start = view.index_of_nth_char(i).unwrap(), end = view.index_of_nth_char(j).unwrap()) to replace view[i:j]")
+#deprecated("use view.charcodes(start = view.offset_of_nth_char(i).unwrap(), end = view.offset_of_nth_char(j).unwrap()) to replace view[i:j]")
 pub fn View::op_as_view(self : View, start~ : Int = 0, end? : Int) -> View {
   let start = if start >= 0 {
     index_at_(self.str, start, start=self.start).unwrap()._
@@ -135,12 +135,6 @@ pub fn View::op_as_view(self : View, start~ : Int = 0, end? : Int) -> View {
 }
 
 ///|
-#deprecated("use View::char_length instead")
-pub fn View::length(self : View) -> Int {
-  self.char_length()
-}
-
-///|
 #deprecated("use View::char_length_eq instead")
 pub fn length_eq(self : View, len : Int) -> Bool {
   self.char_length_eq(len)
@@ -154,6 +148,7 @@ pub fn length_ge(self : View, len : Int) -> Bool {
 
 ///|
 /// Returns the character at the given index from the end of the string.
+/// This function will panic if the index is out of bounds.
 ///
 /// # Examples
 ///
@@ -162,10 +157,6 @@ pub fn length_ge(self : View, len : Int) -> Bool {
 /// inspect!(s.rev_get(0), content="🤣")
 /// inspect!(s.rev_get(4), content="l")
 /// ```
-///
-/// # Panics
-///
-/// @alert unsafe "Panics if the index is out of bounds."
 #deprecated("use String::rev_iter().nth(index).unwrap() instead")
 pub fn String::rev_get(self : String, index : Int) -> Char {
   guard index >= 0

@@ -15,10 +15,12 @@ impl Default for UInt16
 impl Div for UInt16
 impl Eq for UInt16
 impl Hash for UInt16
+impl Mod for UInt16
 impl Mul for UInt16
 impl Shl for UInt16
 impl Shr for UInt16
 impl Sub for UInt16
+impl ToJson for UInt16
 
 // Type aliases
 

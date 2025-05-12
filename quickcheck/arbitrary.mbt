@@ -95,7 +95,7 @@ pub impl Arbitrary for Double with arbitrary(_, rs) {
 ///|
 pub impl Arbitrary for Char with arbitrary(_, rs) {
   // Choose only ASCII characters
-  rs.next_uint() % 128 |> UInt::reinterpret_as_int |> Char::from_int
+  (rs.next_uint() % 128 |> UInt::reinterpret_as_int).unsafe_to_char()
 }
 
 ///|
@@ -106,15 +106,6 @@ pub impl Arbitrary for String with arbitrary(size, rs) {
     s = s + Char::arbitrary(i, rs).to_string()
   }
   s
-}
-
-///|
-pub impl Arbitrary for BigInt with arbitrary(size, rs) {
-  if size == 0 {
-    0
-  } else {
-    rs.next_int64() |> BigInt::from_int64
-  }
 }
 
 ///|

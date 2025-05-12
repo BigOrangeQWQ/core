@@ -138,14 +138,6 @@ test "last" {
 }
 
 ///|
-test "init_" {
-  let ls = @list.of([1, 2, 3, 4, 5])
-  let el : @list.T[Int] = @list.Nil
-  inspect!(ls.init_(), content="@list.of([1, 2, 3, 4])")
-  inspect!(el.init_(), content="@list.of([])")
-}
-
-///|
 test "concat" {
   let ls = @list.of([1, 2, 3, 4, 5])
   let rs = @list.of([6, 7, 8, 9, 10])
@@ -707,4 +699,17 @@ test "stackover flow" {
     lst.rev().fold(init=0.0, fn(acc, x) { acc + x.to_double() }),
     content="549755289600",
   )
+}
+
+///|
+test "compare" {
+  let list1 = @list.of([1, 2, 3])
+  let list2 = @list.of([1, 2, 4])
+  let list3 = @list.of([1, 2])
+  let empty : @list.T[Int] = @list.Nil
+  assert_eq!(list1.compare(list2), -1)
+  assert_eq!(list1.compare(list3), 1)
+  assert_eq!(list3.compare(list1), -1)
+  assert_eq!(list1.compare(list1), 0)
+  assert_eq!(empty.compare(empty), 0)
 }

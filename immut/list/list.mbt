@@ -239,7 +239,7 @@ pub fn tail[A](self : T[A]) -> T[A] {
 
 ///|
 /// Get first element of the list.
-/// @alert unsafe "Panic if the list is empty"
+#internal(unsafe, "Panic if the list is empty")
 pub fn unsafe_head[A](self : T[A]) -> A {
   match self {
     Nil => abort("head of empty list")
@@ -270,7 +270,7 @@ pub fn head[A](self : T[A]) -> A? {
 }
 
 ///|
-/// @alert unsafe "Panic if the list is empty"
+#internal(unsafe, "Panic if the list is empty")
 pub fn unsafe_last[A](self : T[A]) -> A {
   loop self {
     Nil => abort("last of empty list")
@@ -364,14 +364,10 @@ pub fn fold[A, B](self : T[A], init~ : B, f : (B, A) -> B) -> B {
 /// assert_eq!(r, 15)
 /// ```
 pub fn rev_fold[A, B](self : T[A], init~ : B, f : (A, B) -> B) -> B {
-  let tsil = self.rev() // avoid stack overflow, because we don't know `f` will use how much stack.
+  let xs = self.to_array()
   let mut acc = init
-  loop tsil {
-    Nil => ()
-    Cons(x, xs) => {
-      acc = f(x, acc)
-      continue xs
-    }
+  for x in xs.rev_iter() {
+    acc = f(x, acc)
   }
   acc
 }
@@ -546,7 +542,7 @@ pub fn filter_map[A, B](self : T[A], f : (A) -> B?) -> T[B] {
 }
 
 ///|
-/// @alert unsafe "Panic if the index is out of bounds"
+#internal(unsafe, "Panic if the index is out of bounds")
 pub fn unsafe_nth[A](self : T[A], n : Int) -> A {
   loop self, n {
     Nil, _ => abort("nth: index out of bounds")
@@ -653,7 +649,7 @@ pub fn flatten[A](self : T[T[A]]) -> T[A] {
 }
 
 ///|
-/// @alert unsafe "Panic if the list is empty"
+#internal(unsafe, "Panic if the list is empty")
 pub fn unsafe_maximum[A : Compare](self : T[A]) -> A {
   match self {
     Nil => abort("maximum: empty list")
@@ -685,7 +681,7 @@ pub fn maximum[A : Compare](self : T[A]) -> A? {
 }
 
 ///|
-/// @alert unsafe "Panic if the list is empty"
+#internal(unsafe, "Panic if the list is empty")
 pub fn unsafe_minimum[A : Compare](self : T[A]) -> A {
   match self {
     Nil => abort("minimum: empty list")
@@ -1116,5 +1112,52 @@ pub fn singleton[A](x : A) -> T[A] {
 pub impl[A : Hash] Hash for T[A] with hash_combine(self, hasher) {
   for e in self {
     hasher.combine(e)
+  }
+}
+
+///|
+/// Compares two lists lexicographically.
+///
+/// First compares elements pairwise until a difference is found.
+/// If lists have different lengths and all shared elements are equal,
+/// the shorter list is considered less than the longer one.
+///
+/// Parameters:
+///
+/// * `self` : The first list to compare.
+/// * `other` : The second list to compare.
+///
+/// Returns an integer that indicates the relative order:
+///
+/// * A negative value if `self` is less than `other`
+/// * Zero if `self` equals `other`
+/// * A positive value if `self` is greater than `other`
+///
+/// Example:
+///
+/// ```moonbit
+/// test "List::compare" {
+///   let list1 = @list.of([1, 2, 3])
+///   let list2 = @list.of([1, 2, 4])
+///   let list3 = @list.of([1, 2])
+///   assert_eq!(list1.compare(list2), -1) // list1 < list2
+///   assert_eq!(list1.compare(list3), 1) // list2 > list1
+///   assert_eq!(list3.compare(list1), -1) // list1 > list3 (longer)
+///   assert_eq!(list1.compare(list1), 0) // list1 = list1
+/// }
+/// ```
+pub impl[A : Compare] Compare for T[A] with compare(self, other) {
+  loop self, other {
+    Nil, Nil => 0
+    Nil, Cons(_, _) => -1
+    Cons(_, _), Nil => 1
+    Cons(x, xs), Cons(y, ys) => {
+      let cmp = x.compare(y)
+      if cmp != 0 {
+        break cmp
+      } else {
+        continue xs, ys
+      }
+    }
   }
 }
